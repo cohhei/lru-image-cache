@@ -6,40 +6,38 @@ module LruImageCache
   class Cache
     def initialize
       @capacity = 10
-      @images = Array.new
+      @images = Hash.new
     end
 
     def read url
-      existing_image = @images.find { |image| image[:url] == url }
+      existing_image = @images[url]
       if existing_image
-        @images.delete existing_image
-        @images << existing_image
-        return existing_image[:file]
+        @images.delete url
+        @images[url] = existing_image
+      else
+        nil
       end
-      return nil
     end
 
     def write url
       return unless remote_file_exists?(url)
-      file = open url, "rb"
-      new_image = { url: url, file: file }
-      existing_image = @images.find { |image| image[:url] == url }
-
+      existing_image = @images[url]
       if existing_image
-        existing_image[:file].close
-        @images.delete existing_image
+        @images.delete url
+        @images[url] = existing_image
+      else
+        @images[url] = open url, "rb"
       end
 
-      @images << new_image
       if @images.length > @capacity
-        @images.first[:file].close
-        @images.shift
+        @images.first.close
+        @images.delete_if { |key, value| value == nil }
       end
     end
 
     def delete
       @images.each do |image|
-        image[:file].close
+        image.close
       end
       @images.clear
     end
@@ -49,8 +47,7 @@ module LruImageCache
     end
 
     def exists? url
-      found = @images.find { |image| image[:url] == url }
-      !found.nil?
+      @images[url]
     end
 
     def count
@@ -59,7 +56,7 @@ module LruImageCache
 
     def size
       size = 0
-      @images.each { |image| size += image[:file].size }
+      @images.each { |image| size += image.size }
       size
     end
 
