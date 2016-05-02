@@ -16,10 +16,13 @@ class CacheTest < Test::Unit::TestCase
       "http://dummyimage.com/600x400/000/fff.jpg",
       "http://dummyimage.com/600x500/000/fff.jpg"
     ]
-    @cache = LruImageCache::Cache.new
   end
 
   sub_test_case 'for empty cache' do
+    setup do
+      @cache = LruImageCache::Cache.new
+    end
+
     def test_new_cache_is_empty
       assert @cache.empty?
     end
@@ -32,7 +35,7 @@ class CacheTest < Test::Unit::TestCase
 
   sub_test_case 'for cache contained 10 images' do
     setup do
-      @cache.delete
+      @cache = LruImageCache::Cache.new
       @images_url.each { |url| @cache.write url }
     end
 
