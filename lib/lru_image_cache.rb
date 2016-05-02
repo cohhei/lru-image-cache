@@ -10,25 +10,22 @@ module LruImageCache
     end
 
     def read url
+      return nil unless @images.key?(url)
+
+      # replace the image in the end of hash for LRU sort
       existing_image = @images[url]
-      if existing_image
-        @images.delete url
-        @images[url] = existing_image
-      else
-        nil
-      end
+      @images.delete url
+      @images[url] = existing_image
     end
 
     def write url
       return unless remote_file_exists?(url)
-      existing_image = @images[url]
-      if existing_image
-        @images.delete url
-        @images[url] = existing_image
-      else
-        @images[url] = open url, "rb"
-      end
 
+      # If the image don't exists in the hash, open file
+      # If the image exists in the hash, replace in the end of hash
+      @images[url] = open url, "rb" if read(url).nil?
+
+      # close and delete the oldest image file
       if @images.length > @capacity
         @images.first.close
         @images.delete_if { |key, value| value == nil }
