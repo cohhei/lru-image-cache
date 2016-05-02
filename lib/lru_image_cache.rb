@@ -44,7 +44,7 @@ module LruImageCache
     end
 
     def exists? url
-      @images[url]
+      @images.key? url
     end
 
     def count
@@ -52,9 +52,7 @@ module LruImageCache
     end
 
     def size
-      size = 0
-      @images.each { |image| size += image.size }
-      size
+      @images.inject(0) { |size, image| size + image.size }
     end
 
     private
